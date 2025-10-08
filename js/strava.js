@@ -1,6 +1,5 @@
 // ** FUNÇÕES DE INTEGRAÇÃO COM A API DO STRAVA **
 
-// Constrói a URL de autorização do Strava
 function getStravaAuthUrl() {
     const params = new URLSearchParams({
         client_id: STRAVA_CONFIG.clientId,
@@ -9,15 +8,13 @@ function getStravaAuthUrl() {
         scope: STRAVA_CONFIG.scope,
         approval_prompt: 'force'
     });
-    return `${STRAVA_CONFIG.authUrl}?${params.toString()}`;
+    return `https://www.strava.com/oauth/authorize?${params.toString()}`;
 }
 
-// Redireciona o usuário para a página de autorização do Strava
 function connectStrava() {
     window.location.href = getStravaAuthUrl();
 }
 
-// Verifica se há um código de autorização na URL (após o retorno do Strava)
 async function checkForStravaCode() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -29,10 +26,9 @@ async function checkForStravaCode() {
     }
 }
 
-// Lida com o código de retorno, trocando-o por um token de acesso
 async function handleStravaCallback(code) {
     try {
-        const response = await fetch(STRAVA_CONFIG.tokenUrl, {
+        const response = await fetch(`https://www.strava.com/oauth/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -42,51 +38,46 @@ async function handleStravaCallback(code) {
                 grant_type: 'authorization_code'
             })
         });
-        const tokenData = await response.json();
-        if (!response.ok) throw new Error(tokenData.message || 'Erro desconhecido do Strava');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
 
         const stravaInfo = {
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token,
-            expiresAt: tokenData.expires_at,
-            athleteId: tokenData.athlete.id,
-            athleteName: `${tokenData.athlete.firstname} ${tokenData.athlete.lastname}`
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+            expiresAt: data.expires_at,
+            athleteId: data.athlete.id,
+            athleteName: `${data.athlete.firstname} ${data.athlete.lastname}`
         };
 
         await database.ref(`users/${window.appState.currentUser.uid}/strava`).set(stravaInfo);
-        window.appState.stravaData = stravaInfo;
-        showSuccess('Conta Strava conectada com sucesso!');
-        updateStravaUICard();
+        showSuccess('Conta Strava conectada!');
+        checkStravaConnection(); // Re-checa para atualizar a UI
     } catch (error) {
         showError('Erro ao conectar com Strava: ' + error.message);
     }
 }
 
-// Verifica a conexão existente e atualiza a UI
 async function checkStravaConnection() {
-    // Apenas executa se estiver no dashboard de atleta
-    if(document.getElementById('atletaDashboard').classList.contains('active')){
-        const stravaRef = database.ref(`users/${window.appState.currentUser.uid}/strava`);
-        const snapshot = await stravaRef.once('value');
-        window.appState.stravaData = snapshot.exists() ? snapshot.val() : null;
-        
-        updateStravaUICard();
-        await checkForStravaCode();
-    }
+    if(window.appState.userType !== 'atleta') return;
+
+    const snapshot = await database.ref(`users/${window.appState.currentUser.uid}/strava`).once('value');
+    const stravaData = snapshot.exists() ? snapshot.val() : null;
+    window.appState.stravaData = stravaData;
+    
+    updateStravaUICard(stravaData);
+    await checkForStravaCode();
 }
 
-// Renderiza o card do Strava no painel do atleta
-function updateStravaUICard() {
+function updateStravaUICard(stravaData) {
     const cardDiv = document.getElementById('stravaCard');
     if (!cardDiv) return;
 
-    if (window.appState.stravaData) {
+    if (stravaData) {
         cardDiv.innerHTML = `
             <div class="strava-connected">
                 <i class="fab fa-strava"></i>
                 <h3>Conectado ao Strava</h3>
-                <p>Você está conectado como <strong>${window.appState.stravaData.athleteName}</strong>.</p>
-                <small>Suas atividades serão sincronizadas em breve.</small>
+                <p>Conectado como <strong>${stravaData.athleteName}</strong>.</p>
             </div>
         `;
     } else {
@@ -94,7 +85,7 @@ function updateStravaUICard() {
             <div class="strava-disconnected">
                 <i class="fab fa-strava"></i>
                 <h3>Conectar com Strava</h3>
-                <p>Importe suas atividades e acompanhe seu progresso de forma automática.</p>
+                <p>Importe suas atividades automaticamente.</p>
                 <button id="connectStravaBtn" class="btn-strava"><i class="fab fa-strava"></i> Conectar com Strava</button>
             </div>
         `;
