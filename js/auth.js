@@ -42,6 +42,8 @@ function getErrorMessage(error) {
              return 'Email ou senha incorretos.';
         case 'auth/email-already-in-use':
             return 'Este email já está em uso.';
+        case 'auth/weak-password':
+            return 'A senha precisa ter no mínimo 6 caracteres.';
         default:
             return 'Ocorreu um erro desconhecido.';
     }
