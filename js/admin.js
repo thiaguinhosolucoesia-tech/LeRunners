@@ -25,21 +25,23 @@ async function loadAdminUsers() {
         
         Object.keys(users).forEach(uid => {
             const user = { uid, ...users[uid] };
-            if (user.type !== 'admin') totalUsers++;
-            if (user.type === 'professor') totalProfessors++;
-            if (user.type === 'atleta') totalAthletes++;
+            if (user.type !== 'admin') {
+                totalUsers++;
+                if (user.type === 'professor') totalProfessors++;
+                if (user.type === 'atleta') totalAthletes++;
             
-            const card = document.createElement("div");
-            card.className = "user-card";
-            card.innerHTML = `
-                <img src="${user.photoURL}" alt="Foto de ${user.name}" class="user-photo">
-                <div class="user-info">
-                    <h3>${user.name}</h3>
-                    <p>${user.email}</p>
-                    <span class="user-type-badge ${user.type}">${user.type}</span>
-                </div>
-            `;
-            listDiv.appendChild(card);
+                const card = document.createElement("div");
+                card.className = "user-card";
+                card.innerHTML = `
+                    <img src="${user.photoURL}" alt="Foto de ${user.name}" class="user-photo">
+                    <div class="user-info">
+                        <h3>${user.name}</h3>
+                        <p>${user.email}</p>
+                        <span class="user-type-badge ${user.type}">${user.type}</span>
+                    </div>
+                `;
+                listDiv.appendChild(card);
+            }
         });
 
         document.getElementById('adminStatsGrid').innerHTML = `
@@ -67,7 +69,6 @@ async function handleAddUser(e) {
         const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, `secondary-auth-${Date.now()}`);
         const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
         
-        // Usando a instância de DB principal para escrever, garantindo permissão de admin
         await database.ref(`users/${cred.user.uid}`).set({ 
             name, email, type, photoURL, 
             createdAt: new Date().toISOString() 
