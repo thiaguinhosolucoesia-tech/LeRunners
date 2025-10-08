@@ -68,7 +68,7 @@ async function uploadToCloudinary(file) {
 }
 
 function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('active', show); }
-function setButtonLoading(btn, loading) { if (!btn) return; btn.disabled = loading; const txt = btn.querySelector('.btn-text'); const ldg = btn.querySelector('.btn-loading'); if(txt) txt.style.display = loading ? 'none' : 'inline'; if(ldg) ldg.style.display = loading ? 'inline' : 'none'; }
+function setButtonLoading(btn, loading) { if (!btn) return; btn.disabled = loading; }
 function showError(msg) { const el = document.getElementById('errorMessage'); if (el) { el.textContent = msg; el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 5000); } }
 function showSuccess(msg) { const el = document.createElement('div'); el.className = 'success-message'; el.innerHTML = `<i class="fas fa-check-circle"></i><span>${msg}</span>`; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); }
 function showModal(id) { const el = document.getElementById(id); if (el) el.classList.add('active'); }
