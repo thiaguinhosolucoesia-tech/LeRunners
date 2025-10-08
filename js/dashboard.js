@@ -86,9 +86,68 @@ async function loadKnowledgeBase(elementId) {
     });
 }
 
-async function loadAthleteGoals() { /* ...lógica mantida... */ }
+async function loadAthleteGoals() { 
+    const ref = database.ref(`users/${window.appState.currentUser.uid}/goals`);
+    ref.on("value", (snapshot) => {
+        const goals = snapshot.val();
+        const div = document.getElementById("goalsList");
+        if (!div) return;
+        if (goals) {
+            div.innerHTML = `<p><strong>Meta Semanal:</strong> ${goals.weeklyDistance || 'N/A'} km</p><p><strong>Prova Alvo:</strong> ${goals.targetRace || 'N/A'}</p><p><strong>Data:</strong> ${goals.raceDate ? new Date(goals.raceDate).toLocaleDateString() : 'N/A'}</p>`;
+        } else {
+            div.innerHTML = `<div class="empty-state"><i class="fas fa-bullseye"></i><p>Nenhum objetivo definido.</p></div>`;
+        }
+    });
+}
+
 let currentAthleteUidForGoals = null;
-async function handleSetGoals(e) { /* ...lógica mantida... */ }
-function openGoalsModal(uid, name) { /* ...lógica mantida... */ }
-function showProfTab(tabName) { /* ...lógica de abas mantida... */ }
-function showDashTab(tabName) { /* ...lógica de abas mantida... */ }
+async function handleSetGoals(e) {
+    e.preventDefault();
+    if (!currentAthleteUidForGoals) return;
+    const btn = e.target.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+    const goals = {
+        weeklyDistance: document.getElementById('weeklyDistance').value,
+        targetRace: document.getElementById('targetRace').value,
+        raceDate: document.getElementById('raceDate').value
+    };
+    try {
+        await database.ref(`users/${currentAthleteUidForGoals}/goals`).set(goals);
+        showSuccess("Objetivos salvos!");
+        closeModal('goalsModal');
+    } catch (error) {
+        showError("Erro ao salvar os objetivos.");
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
+
+function openGoalsModal(uid, name) {
+    currentAthleteUidForGoals = uid;
+    document.getElementById('goalsAthleteName').textContent = `Metas para ${name}`;
+    const form = document.getElementById('goalsForm');
+    if(form) form.reset();
+    database.ref(`users/${uid}/goals`).once('value').then(snapshot => {
+        if(snapshot.exists()) {
+            const goals = snapshot.val();
+            document.getElementById('weeklyDistance').value = goals.weeklyDistance || '';
+            document.getElementById('targetRace').value = goals.targetRace || '';
+            document.getElementById('raceDate').value = goals.raceDate || '';
+        }
+    });
+    showModal("goalsModal");
+}
+
+function showProfTab(tabName) {
+    document.querySelectorAll('#professorDashboard .dash-tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.querySelectorAll('#professorDashboard .dash-tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+}
+
+function showDashTab(tabName) {
+    document.querySelectorAll('#atletaDashboard .dash-tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.querySelectorAll('#atletaDashboard .dash-tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+}
