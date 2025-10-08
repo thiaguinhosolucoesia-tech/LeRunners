@@ -57,7 +57,7 @@ async function uploadToCloudinary(file) {
     formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
     formData.append('api_key', CLOUDINARY_CONFIG.apiKey);
 
-    const resourceType = file.type.startsWith('image/') ? 'image' : 'raw';
+    const resourceType = file.type.startsWith('image/') ? 'image' : (file.type === 'application/json' ? 'raw' : 'auto');
 
     const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/${resourceType}/upload`, {
         method: 'POST', body: formData
