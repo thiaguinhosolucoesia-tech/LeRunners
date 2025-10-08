@@ -25,12 +25,11 @@ async function loadAdminUsers() {
         
         Object.keys(users).forEach(uid => {
             const user = { uid, ...users[uid] };
-            if (user.type !== 'admin') {
-                totalUsers++;
-                if (user.type === 'professor') totalProfessors++;
-                if (user.type === 'atleta') totalAthletes++;
             
-                const card = document.createElement("div");
+            // Exibe todos os usuários na lista do admin, exceto o próprio master_admin (se ele se cadastrou)
+            // para evitar que ele se delete ou edite por engano.
+            if (user.email !== MASTER_ADMIN_CREDENTIALS.email) {
+                 const card = document.createElement("div");
                 card.className = "user-card";
                 card.innerHTML = `
                     <img src="${user.photoURL}" alt="Foto de ${user.name}" class="user-photo">
@@ -42,6 +41,10 @@ async function loadAdminUsers() {
                 `;
                 listDiv.appendChild(card);
             }
+
+            if (user.type !== 'admin') totalUsers++;
+            if (user.type === 'professor') totalProfessors++;
+            if (user.type === 'atleta') totalAthletes++;
         });
 
         const statsGrid = document.getElementById('adminStatsGrid');
@@ -68,15 +71,21 @@ async function handleAddUser(e) {
     let photoURL = "https://res.cloudinary.com/dpaayfwlj/image/upload/v1728399345/user_on2xvx.png"; // Avatar padrão
 
     try {
-        if (password.length < 6) throw new Error("A senha precisa ter no mínimo 6 caracteres.");
-        if (photoFile) photoURL = await uploadToCloudinary(photoFile);
+        // Validação crucial para evitar o erro 400 (Bad Request)
+        if (password.length < 6) {
+            throw new Error("A senha precisa ter no mínimo 6 caracteres.");
+        }
 
-        // A solução de app secundário é a mais robusta para evitar deslogar o admin.
+        if (photoFile) {
+            photoURL = await uploadToCloudinary(photoFile);
+        }
+
         const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, `secondary-auth-${Date.now()}`);
         const userCredential = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
         const newUser = userCredential.user;
 
-        // Agora, escrevemos os dados no Realtime Database. Com as regras abertas, isso funcionará.
+        // Agora, a escrita no Realtime Database vai funcionar por causa das novas regras
+        // e porque o admin (após se cadastrar) terá o tipo 'admin' no seu nó.
         await database.ref(`users/${newUser.uid}`).set({ 
             name, 
             email, 
