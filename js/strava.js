@@ -75,7 +75,7 @@ function updateStravaUICard(stravaData) {
     if (stravaData) {
         cardDiv.innerHTML = `
             <div class="strava-connected">
-                <i class="fab fa-strava"></i>
+                <i class="fab fa-strava fa-3x"></i>
                 <h3>Conectado ao Strava</h3>
                 <p>Conectado como <strong>${stravaData.athleteName}</strong>.</p>
             </div>
@@ -83,7 +83,7 @@ function updateStravaUICard(stravaData) {
     } else {
         cardDiv.innerHTML = `
             <div class="strava-disconnected">
-                <i class="fab fa-strava"></i>
+                <i class="fab fa-strava fa-3x"></i>
                 <h3>Conectar com Strava</h3>
                 <p>Importe suas atividades automaticamente.</p>
                 <button id="connectStravaBtn" class="btn-strava"><i class="fab fa-strava"></i> Conectar com Strava</button>
