@@ -50,6 +50,7 @@ async function handleAddAthlete(e) {
     let photoURL = "https://res.cloudinary.com/dpaayfwlj/image/upload/v1728399345/user_on2xvx.png";
 
     try {
+        if (password.length < 6) throw new Error("A senha precisa ter no mínimo 6 caracteres.");
         if (photoFile) photoURL = await uploadToCloudinary(photoFile);
         const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, `add-athlete-${Date.now()}`);
         const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
@@ -59,7 +60,7 @@ async function handleAddAthlete(e) {
         closeModal('addAthleteModal');
         e.target.reset();
     } catch (error) {
-        showError(getErrorMessage(error));
+        showError(getErrorMessage(error) || error.message);
     } finally {
         setButtonLoading(btn, false);
     }
