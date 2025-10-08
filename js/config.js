@@ -13,11 +13,10 @@ const STRAVA_CONFIG = {
     scope: 'read,activity:read_all,profile:read_all'
 };
 
-// ** PREENCHA COM OS SEUS DADOS DO CLOUDINARY **
 const CLOUDINARY_CONFIG = {
-    cloudName: "dpaayfwlj",      // Insira seu Cloud Name aqui
-    apiKey: "958375234747598",   // Insira sua API Key aqui
-    uploadPreset: "LeRunners"    // Insira o nome do seu Upload Preset aqui
+    cloudName: "dpaayfwlj",
+    apiKey: "958375234747598",
+    uploadPreset: "LeRunners"
 };
 
 const MASTER_ADMIN_CREDENTIALS = {
