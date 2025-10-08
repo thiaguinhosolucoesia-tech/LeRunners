@@ -51,7 +51,7 @@ async function handleStravaCallback(code) {
 
         await database.ref(`users/${window.appState.currentUser.uid}/strava`).set(stravaInfo);
         showSuccess('Conta Strava conectada!');
-        checkStravaConnection(); // Re-checa para atualizar a UI
+        checkStravaConnection();
     } catch (error) {
         showError('Erro ao conectar com Strava: ' + error.message);
     }
