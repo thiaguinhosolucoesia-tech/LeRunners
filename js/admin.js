@@ -25,11 +25,12 @@ async function loadAdminUsers() {
         
         Object.keys(users).forEach(uid => {
             const user = { uid, ...users[uid] };
+            if (user.type !== 'admin') {
+                totalUsers++;
+                if (user.type === 'professor') totalProfessors++;
+                if (user.type === 'atleta') totalAthletes++;
             
-            // Exibe todos os usuários na lista do admin, exceto o próprio master_admin (se ele se cadastrou)
-            // para evitar que ele se delete ou edite por engano.
-            if (user.email !== MASTER_ADMIN_CREDENTIALS.email) {
-                 const card = document.createElement("div");
+                const card = document.createElement("div");
                 card.className = "user-card";
                 card.innerHTML = `
                     <img src="${user.photoURL}" alt="Foto de ${user.name}" class="user-photo">
@@ -41,16 +42,12 @@ async function loadAdminUsers() {
                 `;
                 listDiv.appendChild(card);
             }
-
-            if (user.type !== 'admin') totalUsers++;
-            if (user.type === 'professor') totalProfessors++;
-            if (user.type === 'atleta') totalAthletes++;
         });
 
         const statsGrid = document.getElementById('adminStatsGrid');
         if (statsGrid) {
             statsGrid.innerHTML = `
-                <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><h3>${totalUsers}</h3><p>Usuários Totais</p></div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><h3>${totalUsers}</h3><p>Utilizadores Totais</p></div></div>
                 <div class="stat-card"><div class="stat-icon"><i class="fas fa-user-tie"></i></div><div class="stat-info"><h3>${totalProfessors}</h3><p>Professores</p></div></div>
                 <div class="stat-card"><div class="stat-icon"><i class="fas fa-running"></i></div><div class="stat-info"><h3>${totalAthletes}</h3><p>Atletas</p></div></div>
             `;
@@ -71,21 +68,21 @@ async function handleAddUser(e) {
     let photoURL = "https://res.cloudinary.com/dpaayfwlj/image/upload/v1728399345/user_on2xvx.png"; // Avatar padrão
 
     try {
-        // Validação crucial para evitar o erro 400 (Bad Request)
+        // **CORREÇÃO CRÍTICA: Validação da palavra-passe**
         if (password.length < 6) {
-            throw new Error("A senha precisa ter no mínimo 6 caracteres.");
+            throw new Error("A palavra-passe deve ter no mínimo 6 caracteres.");
         }
 
         if (photoFile) {
             photoURL = await uploadToCloudinary(photoFile);
         }
 
+        // A solução de app secundário continua a ser a mais robusta para não deslogar o admin.
         const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, `secondary-auth-${Date.now()}`);
         const userCredential = await secondaryApp.auth().createUserWithEmailAndPassword(email, password);
         const newUser = userCredential.user;
 
-        // Agora, a escrita no Realtime Database vai funcionar por causa das novas regras
-        // e porque o admin (após se cadastrar) terá o tipo 'admin' no seu nó.
+        // Com as regras abertas, isto vai funcionar.
         await database.ref(`users/${newUser.uid}`).set({ 
             name, 
             email, 
@@ -95,7 +92,7 @@ async function handleAddUser(e) {
         });
 
         await secondaryApp.delete(); // Limpa a instância secundária
-        showSuccess(`Usuário ${name} criado com sucesso!`);
+        showSuccess(`Utilizador ${name} criado com sucesso!`);
         closeModal('addUserModal');
         e.target.reset();
 
@@ -113,8 +110,8 @@ async function handleUploadKnowledge(e) {
     const title = document.getElementById("knowledgeTitle").value;
     const file = document.getElementById("knowledgeFile").files[0];
     try {
-        if (!file) throw new Error("Nenhum arquivo .json selecionado.");
-        if(file.type !== 'application/json') throw new Error("O arquivo precisa ser do tipo .json.");
+        if (!file) throw new Error("Nenhum ficheiro .json selecionado.");
+        if(file.type !== 'application/json') throw new Error("O ficheiro precisa de ser do tipo .json.");
         
         const fileURL = await uploadToCloudinary(file);
         
@@ -125,7 +122,7 @@ async function handleUploadKnowledge(e) {
             uploadedAt: new Date().toISOString() 
         });
         
-        showSuccess("Arquivo JSON enviado com sucesso!");
+        showSuccess("Ficheiro JSON enviado com sucesso!");
         closeModal('uploadKnowledgeModal');
         e.target.reset();
     } catch (error) {
